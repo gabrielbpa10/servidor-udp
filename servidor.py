@@ -1,38 +1,25 @@
-import socket, time
+import socket, os
 
 PORT = 5000
 ADDRESS = '127.0.0.1'
+BUFFER_SIZE = 4096
 
 with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as comunicacao:
-    comunicacao.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     comunicacao.bind((ADDRESS,PORT))
-    flag = True
-    while flag:
+
+    while True:
         print('Aguardando conexão cliente...')
-        data, addr = comunicacao.recvfrom(1024)
-        print('Recebido de: ', addr)
-        files = []
-        file_name = data.decode()
-        print(f"[{len(files)}] {file_name}")
-        files.append(file_name)
-        print(files[0])
-        # file = open(files[0], "rb")
+        filename, addr = comunicacao.recvfrom(1024)
+        filesize, addr = comunicacao.recvfrom(1024)
+        filename = os.path.basename(filename)
+        filesize = int(filesize)
         
-        # pacote_em_kilobytes = 512
-        # pacote_em_bytes = pacote_em_kilobytes * 8
-        # numero_de_pacotes = int.from_bytes(file, "little")
-
-        # start = time.time()
-        # for i in range(numero_de_pacotes):
-        #     data = comunicacao.recv(pacote_em_bytes)
-        #     file.write(data)
-        #     porcentagem = f"Baixando... {round((100*(i+1))/numero_de_pacotes, 2)}%"
-        #     # print(porcentagem)
-        #     print('\r'+porcentagem, end='')
-
-        # tempo_de_download = round(time.time()-start, 2)
-        # print(f"\nO download foi completo em {tempo_de_download} sec")
-
-
-        comunicacao.sendto(b'Hello, %s!' % data, addr)
-        flag = False
+        with open(filename, 'wb',filesize) as f:
+            while True:
+                bytes_read = comunicacao.recv(BUFFER_SIZE)
+                if not bytes_read:    
+                    break
+                print(bytes_read)
+                f.write(bytes_read)
+                break
+        break
